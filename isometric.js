@@ -281,15 +281,17 @@ objMaster[2] = obj2;
 //Object Arrays
 var sprites = [];
 var waters = [];
+var zIndexSprites = [[],[],[]];
 var objSprites = [];
+var topSprites = [];
 var collisionArray = [[],[],[]];
 
 var waterState;
 
 //Magic Numbers
-var tileSize = 76;
-var halfTile = 38;
-var quarterTile = 18;
+var TILESIZE = 76;
+var HALFTILE = 38;
+var QUARTERTILE = 19;
 
 //Map Size
 var mapX = layer0.length;
@@ -300,6 +302,7 @@ var mapZ = master.length;
 var player = null;
 var playerX = 0;
 var playerY = 0;
+var playerLevel = 2;
 var hit = false;
 var winLose = false;
 var mapPopulated = false;
@@ -316,6 +319,9 @@ var canY = canvas1.height;
 
 var canvas2 = document.getElementById("viewport1");
 var canv2d2 = canvas2.getContext("2d");
+
+var canvas3 = document.getElementById("viewport3");
+var canv2d3 = canvas3.getContext("2d");
 
 var image = new Image();
 image.src = "sprites.png";
@@ -371,14 +377,14 @@ var spriteObject =
 	id: 0,
 	sourceX: 0,
 	sourceY: 0,
-	sourceWidth: tileSize,
-	sourceHeight: tileSize,
+	sourceWidth: TILESIZE,
+	sourceHeight: TILESIZE,
 	x: 0,
 	y: 0,
 	vx: 0,
 	vy: 0,
-	width: tileSize,
-	height: tileSize,
+	width: TILESIZE,
+	height: TILESIZE,
 	visible: true,
 	centerX: function()
 	{
@@ -491,6 +497,7 @@ function blockRectangle(r1, r2)
 {
 	console.log("Start");
 	reset();
+	updatePlayerHight()
 })();
 
 function reset()
@@ -519,19 +526,19 @@ function updateAnimation()
 		switch(waterState)
 		{
 			case 0:
-				water.sourceX = tileSize * 2;
+				water.sourceX = TILESIZE * 2;
 				break;
 				
 			case 1:
-				water.sourceX = tileSize * 3;
+				water.sourceX = TILESIZE * 3;
 				break;
 				
 			case 2:
-				water.sourceX = tileSize * 4;
+				water.sourceX = TILESIZE * 4;
 				break;
 				
 			case 3:
-				water.sourceX = tileSize * 5;
+				water.sourceX = TILESIZE * 5;
 				break;
 		}
 	}
@@ -546,7 +553,20 @@ function updateAnimation()
 }
 
 function updateZIndex()
-{
+{	
+	for(var i = 0; i < zIndexSprites.length; i++)
+	{
+		var obj = zIndexSprites[i]
+		if(obj.y + obj.sourceHeight < player.y + player.sourceHeight)
+		{
+			obj.visible = false;
+		}
+		if(obj.y + obj.sourceHeight > player.y + player.sourceHeight)
+		{
+			obj.visible = true;
+		}
+	}
+	
 	for(var i = 0; i < objSprites.length; i++)
 	{
 		var obj = objSprites[i]
@@ -559,6 +579,11 @@ function updateZIndex()
 			obj.visible = true;
 		}
 	}
+}
+
+function updatePlayerHight()
+{
+	//topSprites = objSprites.concat(zIndexSprites[playerLevel]);
 }
 
 function popMap()
@@ -574,10 +599,10 @@ function popMap()
 				var currentTileNum = master[z][y][x];
 				if(currentTileNum !== 0)
 				{
-					zAjust = z * halfTile;
+					zAjust = z * HALFTILE;
 					if(y%2 == 0)
 					{
-						stagger = halfTile;
+						stagger = HALFTILE;
 					}
 					else
 					{
@@ -589,28 +614,32 @@ function popMap()
 							var grass = Object.create(spriteObject);
 							grass.sourceX = 0;
 							grass.sourceY = 0;
-							grass.x = (x * tileSize - stagger);
-							grass.y = (y * quarterTile) - zAjust;
+							grass.x = (x * TILESIZE - stagger);
+							grass.y = (y * QUARTERTILE) - zAjust;
 							sprites.push(grass);
+							var grass2 = $.extend(true, {}, grass);
 							collisionArray[z].push(grass);
+							zIndexSprites[z].push(grass2);
 							break;
 							
 						case 2:
 							var dirt = Object.create(spriteObject);
-							dirt.sourceX = tileSize;
+							dirt.sourceX = TILESIZE;
 							dirt.sourceY = 0;
-							dirt.x = (x * tileSize - stagger);
-							dirt.y = (y * quarterTile) - zAjust;
+							dirt.x = (x * TILESIZE - stagger);
+							dirt.y = (y * QUARTERTILE) - zAjust;
 							sprites.push(dirt);
+							var dirt2 = $.extend(true, {}, dirt);
 							collisionArray[z].push(dirt);
+							zIndexSprites[z].push(dirt2);
 							break;
 							
 						case 3:
 							var water = Object.create(spriteObject);
-							water.sourceX = tileSize * 2;
+							water.sourceX = TILESIZE * 2;
 							water.sourceY = 0;
-							water.x = (x * tileSize - stagger);
-							water.y = (y * quarterTile) - zAjust;
+							water.x = (x * TILESIZE - stagger);
+							water.y = (y * QUARTERTILE) - zAjust;
 							sprites.push(water);
 							waters.push(water);
 							collisionArray[z].push(water);
@@ -619,11 +648,13 @@ function popMap()
 						case 4:
 							var grasshalf = Object.create(spriteObject);
 							grasshalf.sourceX = 0;
-							grasshalf.sourceY = tileSize;
-							grasshalf.x = (x * tileSize - stagger);
-							grasshalf.y = (y * quarterTile) - zAjust;
+							grasshalf.sourceY = TILESIZE;
+							grasshalf.x = (x * TILESIZE - stagger);
+							grasshalf.y = (y * QUARTERTILE) - zAjust;
 							sprites.push(grasshalf);
+							var grasshalf2 = $.extend(true, {}, grasshalf);
 							collisionArray[z].push(grasshalf);
+							zIndexSprites[z].push(grasshalf2);
 							break;
 					}
 				}
@@ -641,10 +672,10 @@ function popMap()
 				var currentTileNum = objMaster[z][y][x];
 				if(currentTileNum !== 0)
 				{
-					zAjust = z * halfTile;
+					zAjust = z * HALFTILE;
 					if(y%2 == 0)
 					{
-						stagger = halfTile;
+						stagger = HALFTILE;
 					}
 					else
 					{
@@ -655,13 +686,13 @@ function popMap()
 						case 5:
 							var fenceleft = Object.create(spriteObject);
 							fenceleft.sourceX = 92;
-							fenceleft.sourceY = tileSize;
+							fenceleft.sourceY = TILESIZE;
 							fenceleft.width = 42;
 							fenceleft.height = 48;
 							fenceleft.sourceWidth = 42;
 							fenceleft.sourceHeight = 48;
-							fenceleft.x = (x * tileSize - stagger) + 18;
-							fenceleft.y = (y * quarterTile) - zAjust - 18;
+							fenceleft.x = (x * TILESIZE - stagger) + 18;
+							fenceleft.y = (y * QUARTERTILE) - zAjust - 18;
 							sprites.push(fenceleft);
 							var fenceleft2 = $.extend(true, {}, fenceleft);
 							objSprites.push(fenceleft2);
@@ -671,13 +702,13 @@ function popMap()
 						case 6:
 							var fenceright = Object.create(spriteObject);
 							fenceright.sourceX = 174;
-							fenceright.sourceY = tileSize;
+							fenceright.sourceY = TILESIZE;
 							fenceright.width = 42;
 							fenceright.height = 48;
 							fenceright.sourceWidth = 42;
 							fenceright.sourceHeight = 48,
-							fenceright.x = (x * tileSize - stagger) + 18;
-							fenceright.y = (y * quarterTile) - zAjust - 18;
+							fenceright.x = (x * TILESIZE - stagger) + 18;
+							fenceright.y = (y * QUARTERTILE) - zAjust - 18;
 							sprites.push(fenceright);
 							var fenceright2 = $.extend(true, {}, fenceright);
 							objSprites.push(fenceright2);
@@ -692,8 +723,8 @@ function popMap()
 							greentree.height = 128;
 							greentree.sourceWidth = 102,
 							greentree.sourceHeight = 128,
-							greentree.x = (x * tileSize - stagger + 22);
-							greentree.y = (y * quarterTile) - zAjust - 10;
+							greentree.x = (x * TILESIZE - stagger + 22);
+							greentree.y = (y * QUARTERTILE) - zAjust - 4;
 							sprites.push(greentree);
 							var greentree2 = $.extend(true, {}, greentree);
 							objSprites.push(greentree2);
@@ -708,8 +739,8 @@ function popMap()
 							tree.height = 128;
 							tree.sourceWidth = 112;
 							tree.sourceHeight = 128;
-							tree.x = (x * tileSize - stagger + 16);
-							tree.y = (y * quarterTile) - zAjust - 8;
+							tree.x = (x * TILESIZE - stagger + 16);
+							tree.y = (y * QUARTERTILE) - zAjust - 2;
 							sprites.push(tree);
 							var tree2 = $.extend(true, {}, tree);
 							objSprites.push(tree2);
@@ -723,9 +754,9 @@ function popMap()
 	
 	player = Object.create(spriteObject);
 	player.sourceX = 0;
-	player.sourceY = tileSize * 2;
-	player.x = (7 * tileSize);
-	player.y = (7 * quarterTile);
+	player.sourceY = TILESIZE * 2;
+	player.x = (7 * TILESIZE);
+	player.y = (7 * QUARTERTILE);
 	sprites.push(player);
 	
 	console.log("mapPopulated");
@@ -737,11 +768,11 @@ function playGame()
 	//Player Movement
 	if(up && !down)
 	{
-		player.vy = -.48;
+		player.vy = -.5;
 	}
 	if(down && !up)
 	{	
-		player.vy = .48;
+		player.vy = .5;
 	}
 	if(left && !right)
 	{
@@ -769,23 +800,21 @@ function playGame()
 	}
 	if(player.vx > 0)
 	{
-		player.sourceX = tileSize;
+		player.sourceX = TILESIZE;
 	}
 	
-	var playerX = Math.floor(player.x / tileSize);
-	var playerY = Math.floor(player.y / quarterTile);
-	var playerLevel = 2;
+	var playerX = Math.floor(player.x / TILESIZE);
+	var playerY = Math.floor(player.y / QUARTERTILE);
 	for(var i = 0; i < collisionArray[playerLevel].length; i++)
 	{
 		var currentTile = collisionArray[playerLevel][i];
-		var collisionX = Math.floor(currentTile.x / tileSize);
-		var collisionY = Math.floor(currentTile.y / quarterTile);
+		var collisionX = Math.floor(currentTile.x / TILESIZE);
+		var collisionY = Math.floor(currentTile.y / QUARTERTILE);
 		if(collisionY == playerY && collisionX  == playerX)
 		{
-			blockRectangle(player, currentTile)
+			//blockRectangle(player, currentTile)
 		}
 	}
-	
 	
 	//Screen Bounding Box
 	player.x = Math.max(0, Math.min(player.x + player.vx, canvas1.width-player.width - 0));
@@ -833,14 +862,26 @@ function render()
 		}
 	}
 	
+	if(zIndexSprites.length !== 0)
+	{
+		for(var i = 0; i < zIndexSprites.length; i++)
+		{
+			var sprite2 = zIndexSprites[i];
+			if(sprite2.visible)
+			{
+				canv2d2.drawImage(image, sprite2.sourceX, sprite2.sourceY, sprite2.sourceWidth, sprite2.sourceHeight, Math.floor(sprite2.x), Math.floor(sprite2.y), sprite2.width, sprite2.height);
+			}
+		}
+	}
+	
 	if(objSprites.length !== 0)
 	{
 		for(var i = 0; i < objSprites.length; i++)
 		{
-			var sprite2 = objSprites[i];
-			if(sprite2.visible)
+			var sprite3 = objSprites[i];
+			if(sprite3.visible)
 			{
-				canv2d2.drawImage(image, sprite2.sourceX, sprite2.sourceY, sprite2.sourceWidth, sprite2.sourceHeight, Math.floor(sprite2.x), Math.floor(sprite2.y), sprite2.width, sprite2.height);
+				canv2d3.drawImage(image, sprite3.sourceX, sprite3.sourceY, sprite3.sourceWidth, sprite3.sourceHeight, Math.floor(sprite3.x), Math.floor(sprite3.y), sprite3.width, sprite3.height);
 			}
 		}
 	}
